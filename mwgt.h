@@ -1,4 +1,4 @@
-//================================ mwgt.h ====================================
+п»ї//================================ mwgt.h ====================================
 
 #ifndef MWGT_H
 #define MWGT_H
@@ -10,42 +10,54 @@
 
 #include "disp.h"
 #include "opt.h"
+#include "opstep.h"
+#include "wqueue.h"
 
 //==================================================
-//============ класс - окно приложения =============
+//============ РєР»Р°СЃСЃ - РѕРєРЅРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ =============
 //==================================================
 
-class Mwgt : public QMainWindow //Наследует базовый класс библиотеки Qt
+class Mwgt : public QMainWindow //РќР°СЃР»РµРґСѓРµС‚ РєР»Р°СЃСЃ РіР»Р°РІРЅРѕРіРѕ РѕРєРЅР° Qt
 {
-    Q_OBJECT //Этот макрос указывает компилятору moc, что нужно внедрить в
-    //файл дополнительную информацию, прежде чем передать его
-    //стандартному компилятору С++
+    Q_OBJECT //Р­С‚РѕС‚ РјР°РєСЂРѕСЃ СѓРєР°Р·С‹РІР°РµС‚ РєРѕРјРїРёР»СЏС‚РѕСЂСѓ moc, С‡С‚Рѕ РЅСѓР¶РЅРѕ РІРЅРµРґСЂРёС‚СЊ РІ
+    //С„Р°Р№Р» РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ, РїСЂРµР¶РґРµ С‡РµРј РїРµСЂРµРґР°С‚СЊ РµРіРѕ
+    //СЃС‚Р°РЅРґР°СЂС‚РЅРѕРјСѓ РєРѕРјРїРёР»СЏС‚РѕСЂСѓ РЎ++
+
 public:
-    Mwgt(QMainWindow *parent = 0); // конструктор
-    ~Mwgt(); // деструктор
+    Mwgt(QMainWindow *parent = 0); // РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ
+    ~Mwgt(); // РґРµСЃС‚СЂСѓРєС‚РѕСЂ
+
 private slots:
-    virtual void label_program(); // слоты
+    virtual void label_program(); // СЃР»РѕС‚С‹
     virtual void label_developer();
     virtual void label_help();
     virtual void options();
+    virtual void opsteps();
+    virtual void opwqueue();
+
+public slots:
+    void slotSTOP();
 
 private:
-    QMenuBar* menuBar; // меню
-    QMenu* pmenu;
+    QMenuBar* menuBar; // РјРµРЅСЋ
+    QMenu* pmenu; // РїСѓРЅРєС‚С‹ РјРµРЅСЋ
     QMenu* pmenu1;
     QMenu* pmenu2;
     QMenu* pmenu3;
-    QLabel* lprogram; // надписи
+    QLabel* lprogram; // РЅР°РґРїРёСЃРё
     QLabel* ldeveloper;
     QLabel* lhelp;
-    QHBoxLayout* mainLayout; // компановка
-    QWidget* mainWidget; // дополнительный виджет
+    QHBoxLayout* mainLayout; // РєРѕРјРїР°РЅРѕРІРєР°
+    QWidget* mainWidget; // РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Р№ РІРёРґР¶РµС‚
+    QPalette pal;
 
-    Disp* disp;
-    Options* opt;
+    Disp* disp; // Р”РёСЃРїС‚РµС‡РµСЂ
+    Options* opt; // РћРєРЅРѕ СЃРѕР·РґР°РЅРёСЏ РїСЂРѕС†РµСЃСЃРѕРІ
+    OpStep* ost; // РћРєРЅРѕ РЅР°СЃС‚СЂРѕРµРє
+    Wqueue* wque; // Р“СЂР°С„РёРє РѕС‡РµСЂРµРґРё
+    QScrollArea* qsa; // РћРєРЅРѕ СЃ РїРѕР»РѕСЃРѕР№ РїСЂРѕРєСЂСѓС‚РєРё
 
 };
 
-
-
 #endif // MWGT_H
+//==============================================================================

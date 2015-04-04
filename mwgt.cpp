@@ -1,159 +1,212 @@
-//================================= widget.cpp =================================
+п»ї//================================= mwgt.cpp =================================
 
 #include "mwgt.h"
-//==================================================
-//=========== конструктор главного окна ============
-//==================================================
+
 Mwgt::Mwgt(QMainWindow *parent)
     : QMainWindow(parent)
 {
-    //================== заголовок окна =====================
-    setWindowTitle(tr("Диспетчер задач"));
-    setFixedSize(900,490);
+    //================== Р·Р°РіРѕР»РѕРІРѕРє РѕРєРЅР° =====================
+    setWindowTitle(tr("Р”РёСЃРїРµС‚С‡РµСЂ Р·Р°РґР°С‡"));
+    setFixedSize(920,520);
 
-    //================== содержимое окна =====================
+    //================== СЃРѕРґРµСЂР¶РёРјРѕРµ РѕРєРЅР° =====================
     mainWidget = new QWidget();
     mainLayout = new QHBoxLayout();
+    // Р·Р°РґР°С‘Рј С†РІРµС‚ С„РѕРЅР° - Р±РµР»С‹Р№
+    pal.setColor(this->backgroundRole(), Qt::white);
+    this->setPalette(pal);
+    this->setAutoFillBackground(true);
 
-    disp = new Disp();
-    opt = new Options();
- //   opt->show(); // Пусть вызывается из меню, потому что почемы бы и да
+    disp = new Disp(); // СЃРѕР·РґР°С‘Рј РґРёСЃРїРµС‚С‡РµСЂ
 
+    opt = new Options(); // СЃРѕР·РґР°С‘Рј РЅР°СЃС‚СЂРѕР№РєРё
     connect(opt, SIGNAL(sendDO(QVector <int>)), disp, SLOT(slotDO(QVector <int>)));
+    connect(opt, SIGNAL(SSTOP()), this, SLOT(slotSTOP()));
 
+    ost = new OpStep(); // Рё РµС‰С‘ РѕРґРЅРё РЅР°СЃС‚СЂРѕР№РєРё
+    connect(ost, SIGNAL(signalOS(int)), disp, SLOT(slotOS(int)));
 
-    //=================== создаём меню ======================
-    menuBar = new QMenuBar();
-    // первый пункт
-    pmenu = new QMenu(tr("&Файл"));
-    pmenu ->addAction(tr("&Выход"),
-                      this, SLOT(close()));
+    wque = new Wqueue(); // СЃРѕР·РґР°С‘Рј РіСЂР°С„РёРє РѕС‡РµСЂРµРґРё
+    connect(disp, SIGNAL(signalQueue(int,QColor)), wque, SLOT(SlotQueue(int,QColor)));
+    wque->setMinimumSize(400,200); // РјРёРЅРёРјР°Р»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ
 
-    pmenu1 = new QMenu(tr("&Процессы"));
-    pmenu1 ->addAction(tr("&Создание процессов"),
-                      this, SLOT(options()));
+    qsa = new QScrollArea(); // СЃРѕР·РґР°С‘Рј РѕРєРЅРѕ РІРёРґРѕРІРѕР№ РїСЂРѕРєСЂСѓС‚РєРё
+    qsa->setWindowTitle(tr("Р“СЂР°С„РёРє РѕС‡РµСЂРµРґРё"));
+    qsa->setPalette(pal); // СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј С†РІРµС‚ С„РѕРЅР°
+    qsa->setAutoFillBackground(true);
+    qsa->resize(605, 305); // СЂР°Р·РјРµСЂ РЅРµ С„РёРєРёСЃСЂРѕРІР°РЅРЅС‹Р№
+    qsa->setMinimumSize(300,150); // РјРёРЅРёРјР°Р»СЊРЅРѕ РІРѕР·РјРѕР¶РЅС‹Р№
+    qsa->setWidget(wque); // РѕС‚РїСЂР°РІР»СЏРµРј РІ РЅРµРіРѕ РѕС‡РµСЂРµРґСЊ
 
-    // четвёртый пункт меню
-    pmenu3 = new QMenu(tr("&Информация"));
-    pmenu3 ->addAction(tr("&О программе"), this,
-                       SLOT(label_program()));
-    pmenu3 ->addAction(tr("&Разработчик"), this,
-                       SLOT(label_developer()));
-    pmenu3 ->addSeparator();
-    pmenu3 ->addAction(tr("&Помощь"), this,
-                       SLOT(label_help()));
-    // выводим меню
-    menuBar ->addMenu(pmenu);
-    menuBar ->addMenu(pmenu1);
-
-    menuBar ->addMenu(pmenu3);
-    this->setMenuBar(menuBar);
-
-
+    // РєРѕРјРїР°РЅРѕРІРєР° РІ С†РµР»РѕРј Р·РґРµСЃСЊ РЅРµ РЅСѓР¶РЅР°, С‚Рє РІ РіР»Р°РІРЅРѕРј РѕРєРЅРµ РІСЃРµРіРѕ 1 РІРёРґР¶РµС‚
+    // РЅРѕ С‚Р°РєРёРј РѕР±СЂР°Р·РѕРј РјС‹ РјРѕР¶РµС‚ СѓРїСЂР°РІР»СЏС‚СЊ РµРіРѕ СЂР°Р·РјРµС‰РµРЅРёРµРј
+    // Рё РїРѕР»СѓС‡Р°РµРј РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РІСЃС‚Р°РІС‚РёС‚СЊ РµС‰С‘ РІРёРґР¶РµС‚С‹
     mainWidget->setLayout(mainLayout);
     setCentralWidget(mainWidget);
 
+    mainLayout->addWidget(disp);
+    mainWidget->setLayout(mainLayout);
+    setCentralWidget(mainWidget);
+
+    //=================== СЃРѕР·РґР°С‘Рј РјРµРЅСЋ ======================
+    menuBar = new QMenuBar();
+    // РїРµСЂРІС‹Р№ РїСѓРЅРєС‚
+    pmenu = new QMenu(tr("Р¤Р°Р№Р»"));
+    pmenu ->addAction(tr("Р’С‹С…РѕРґ"),
+                      this, SLOT(close()));
+
+    pmenu1 = new QMenu(tr("РџСЂРѕС†РµСЃСЃС‹"));
+    pmenu1 ->addAction(tr("РЎРѕР·РґР°РЅРёРµ РїСЂРѕС†РµСЃСЃРѕРІ"),
+                       this, SLOT(options()));
+    pmenu1 ->addAction(tr("Р“СЂР°С„РёРє РѕС‡РµСЂРµРґРё"),
+                       this, SLOT(opwqueue()));
+
+    pmenu2 = new QMenu(tr("РќР°СЃС‚СЂРѕР№РєРё"));
+    pmenu2->addAction(tr("РџР°СЂР°РјРµС‚СЂС‹"),
+                      this, SLOT(opsteps()));
+
+    // С‡РµС‚РІС‘СЂС‚С‹Р№ РїСѓРЅРєС‚ РјРµРЅСЋ
+    pmenu3 = new QMenu(tr("РРЅС„РѕСЂРјР°С†РёСЏ"));
+    pmenu3 ->addAction(tr("Рћ РїСЂРѕРіСЂР°РјРјРµ"), this,
+                       SLOT(label_program()));
+    pmenu3 ->addAction(tr("Р Р°Р·СЂР°Р±РѕС‚С‡РёРє"), this,
+                       SLOT(label_developer()));
+    pmenu3 ->addSeparator();
+    pmenu3 ->addAction(tr("РџРѕРјРѕС‰СЊ"), this,
+                       SLOT(label_help()));
+    // РІС‹РІРѕРґРёРј РјРµРЅСЋ
+    menuBar ->addMenu(pmenu);
+    menuBar ->addMenu(pmenu1);
+    menuBar ->addMenu(pmenu2);
+    menuBar ->addMenu(pmenu3);
+    this->setMenuBar(menuBar);
 
     //==================== lprogram =========================
     lprogram = new QLabel(tr(
-"<H2><CENTER>Диспетчер задач</CENTER></H2>"
-"<H3><CENTER>Disp 1.0</CENTER></H3>"
-"<P>             </P>"
-"<P>&nbsp;&nbsp;&nbsp;&nbsp;Данная программа представляет собой<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;симулятор диспетчера задач,<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;использующий вытесняющую дисциплину<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;диспетчеризации с динамическими приоритетами.<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp; <BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;ОС, лабораторная работа №1, вариант 9.</P>"
-"<b><P>&nbsp;&nbsp;&nbsp;&nbsp;Основан на Qt 4.7.4</P></b>"
-"<P>&nbsp;&nbsp;&nbsp;&nbsp;Версия 1.0<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;Разработка: Весна 2015</P>"
+                              "<H2><CENTER>Р”РёСЃРїРµС‚С‡РµСЂ Р·Р°РґР°С‡</CENTER></H2>"
+                              "<H3><CENTER>Disp 1.0</CENTER></H3>"
+                              "<P>             </P>"
+                              "<P>&nbsp;&nbsp;&nbsp;&nbsp;Р”Р°РЅРЅР°СЏ РїСЂРѕРіСЂР°РјРјР° РїСЂРµРґСЃС‚Р°РІР»СЏРµС‚ СЃРѕР±РѕР№<BR>"
+                              "&nbsp;&nbsp;&nbsp;&nbsp;СЃРёРјСѓР»СЏС‚РѕСЂ РґРёСЃРїРµС‚С‡РµСЂР° Р·Р°РґР°С‡,<BR>"
+                              "&nbsp;&nbsp;&nbsp;&nbsp;РёСЃРїРѕР»СЊР·СѓСЋС‰РёР№ РІС‹С‚РµСЃРЅСЏСЋС‰СѓСЋ РґРёСЃС†РёРїР»РёРЅСѓ<BR>"
+                              "&nbsp;&nbsp;&nbsp;&nbsp;РґРёСЃРїРµС‚С‡РµСЂРёР·Р°С†РёРё СЃ РґРёРЅР°РјРёС‡РµСЃРєРёРјРё РїСЂРёРѕСЂРёС‚РµС‚Р°РјРё.<BR>"
+                              "&nbsp;&nbsp;&nbsp;&nbsp; <BR>"
+                              "&nbsp;&nbsp;&nbsp;&nbsp;РћРЎ, Р»Р°Р±РѕСЂР°С‚РѕСЂРЅР°СЏ СЂР°Р±РѕС‚Р° в„–1, РІР°СЂРёР°РЅС‚ 9.</P>"
+                              "<b><P>&nbsp;&nbsp;&nbsp;&nbsp;РћСЃРЅРѕРІР°РЅ РЅР° Qt 4.7.4</P></b>"
+                              "<P>&nbsp;&nbsp;&nbsp;&nbsp;Р’РµСЂСЃРёСЏ 1.0<BR>"
+                              "&nbsp;&nbsp;&nbsp;&nbsp;Р Р°Р·СЂР°Р±РѕС‚РєР°: Р’РµСЃРЅР° 2015</P>"
                               ));
     lprogram->setWindowFlags(Qt::Window | Qt::WindowSystemMenuHint);
     lprogram->setFixedSize(280,240);
-    lprogram->setWindowTitle(tr("О программе"));
+    lprogram->setWindowTitle(tr("Рћ РїСЂРѕРіСЂР°РјРјРµ"));
+
+
     //=================== ldeveloper ========================
     ldeveloper = new QLabel(tr(
-"<B><P><CENTER>СПб ГУАП</CENTER>"
-"<B><CENTER>Институт вычислительных систем</CENTER></B>"
-"<B><CENTER>и программирования</CENTER></P></B>"
-"<P><B><CENTER>Кафедра вычислительных систем и сетей</CENTER></P></B>"
-"<P>&nbsp;&nbsp;&nbsp;&nbsp;Разработчик: Максимова Ольга</P>"
-"<P>&nbsp;&nbsp;&nbsp;&nbsp;Учебная группа №4242</P>"
-"<P>&nbsp;&nbsp;&nbsp;&nbsp;Время: Весна 2015</P>"
+                                "<B><P><CENTER>РЎРџР± Р“РЈРђРџ</CENTER>"
+                                "<B><CENTER>РРЅСЃС‚РёС‚СѓС‚ РІС‹С‡РёСЃР»РёС‚РµР»СЊРЅС‹С… СЃРёСЃС‚РµРј</CENTER></B>"
+                                "<B><CENTER>Рё РїСЂРѕРіСЂР°РјРјРёСЂРѕРІР°РЅРёСЏ</CENTER></P></B>"
+                                "<P><B><CENTER>РљР°С„РµРґСЂР° РІС‹С‡РёСЃР»РёС‚РµР»СЊРЅС‹С… СЃРёСЃС‚РµРј Рё СЃРµС‚РµР№</CENTER></P></B>"
+                                "<P>&nbsp;&nbsp;&nbsp;&nbsp;Р Р°Р·СЂР°Р±РѕС‚С‡РёРє: РњР°РєСЃРёРјРѕРІР° РћР»СЊРіР°</P>"
+                                "<P>&nbsp;&nbsp;&nbsp;&nbsp;РЈС‡РµР±РЅР°СЏ РіСЂСѓРїРїР° в„–4242</P>"
+                                "<P>&nbsp;&nbsp;&nbsp;&nbsp;Р’СЂРµРјСЏ: Р’РµСЃРЅР° 2015</P>"
                                 ));
     ldeveloper->setWindowFlags(Qt::Window | Qt::WindowSystemMenuHint);
     ldeveloper->setFixedSize(260,160);
-    ldeveloper->setWindowTitle(tr("Разработчик"));
+    ldeveloper->setWindowTitle(tr("Р Р°Р·СЂР°Р±РѕС‚С‡РёРє"));
+
+
     //====================== lhelp ==========================
     lhelp = new QLabel(tr(
-"<B><P><CENTER><H2>Работа с программой</H2></CENTER></P></B>"
-"<P>&nbsp;&nbsp;&nbsp;&nbsp;<b>Программа позволяет симулировать различные<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;дорожные ситуации, управляя светофорами.</b></P>"
-"<P>&nbsp;&nbsp;&nbsp;&nbsp;- Для того, чтобы <b>изменить время работы</b><BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;определённого сигнала светофора введите <BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;необходимое значение в соотвествующее<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;поле: не менее 5и секунд для красного и зелёного<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;и не менее 2х для жёлтого сигнала.<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;Нажмите Применить для задания времени.</P>"
-"<P>&nbsp;&nbsp;&nbsp;&nbsp;- Для установления <b>настроек времени<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;по умолчнаию</b> нажмите Сбросить + Применить.<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;- Количество <b>автомобилей</b> на дороге<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;можно регулировать, выбирая соотвествующий<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;уровень сложности. Для этого служит меню Уровень.<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;Номер уровная соотвествует количеству автомобилей.</P>"
-"<P>&nbsp;&nbsp;&nbsp;&nbsp;- Для <b>изменения дизайна</b> автомобилей<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;воспользуйтесь меню Вид -> Вид автомобиля.<BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;В открывшемся окне выберите автомобиль, <BR>"
-"&nbsp;&nbsp;&nbsp;&nbsp;и установите понравившийся дизайн. </P>"
+                           "<B><P><CENTER><H2>Р Р°Р±РѕС‚Р° СЃ РїСЂРѕРіСЂР°РјРјРѕР№</H2></CENTER></P></B>"
+                           "<P>&nbsp;&nbsp;&nbsp;&nbsp;РџСЂРѕРіСЂР°РјРјР° РїСЂРµРґСЃС‚Р°РІР»СЏРµС‚ СЃРѕР±РѕР№ СЃРёРјСѓР»СЏС‚РѕСЂ<BR>"
+                           "&nbsp;&nbsp;&nbsp;&nbsp;РґРёСЃРїРµС‚С‡РµСЂР° Р·Р°РґР°С‡ СЃ РґРёРЅР°РјРёС‡РµСЃРєРёРјРё РїСЂРёРѕСЂРёС‚РµС‚Р°РјРё,<BR>"
+                           "&nbsp;&nbsp;&nbsp;&nbsp;РІС‹С‡РёСЃР»СЏРµРјС‹РјРё РїРѕ С„РѕСЂРјСѓР»Рµ pi = pi-1 + ai*t*t.</P>"
+                           "<P>&nbsp;&nbsp;&nbsp;&nbsp;Р”Р»СЏ СЃРѕР·РґР°РЅРёСЏ РїСЂРѕС†РµСЃСЃРѕРІ Р·Р°Р№РґРёС‚Рµ РІ РјРµРЅСЋ <B>РџСЂРѕС†РµСЃСЃС‹</B><BR>"
+                           "&nbsp;&nbsp;&nbsp;&nbsp;Рё РІС‹Р±РµСЂРёС‚Рµ РїСѓРЅРєС‚ <B>РЎРѕР·РґР°РЅРёРµ РїСЂРѕС†РµСЃСЃРѕРІ</B>.<BR>"
+                           "&nbsp;&nbsp;&nbsp;&nbsp;РџСЂРѕС†РµСЃСЃ СЃС‡РёС‚Р°РµС‚СЃСЏ СЃРѕР·РґР°РЅРЅС‹Рј, РµСЃР»Рё РµРіРѕ РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ<BR>"
+                           "&nbsp;&nbsp;&nbsp;&nbsp;РЅРµ СЂР°РІРЅРѕ 0.</P>"
+                           "<P>&nbsp;&nbsp;&nbsp;&nbsp;Р”Р»СЏ РїСЂРёРјРµРЅРµРЅРёСЏ РёР·РјРµРЅРµРЅРёР№ РЅР°Р¶РјРёС‚Рµ РєРЅРѕРїРєСѓ <B>РЎС‚Р°СЂС‚</B>,<BR>"
+                           "&nbsp;&nbsp;&nbsp;&nbsp;РґР»СЏ РѕСЃС‚Р°РЅРѕРІРєРё СЂР°Р±РѕС‚С‹ Р”РёСЃРїРµС‚С‡РµСЂР° - РєРЅРѕРїРєСѓ <B>РЎР±СЂРѕСЃ</B>.</P>"
+                           "<P>&nbsp;&nbsp;&nbsp;&nbsp;Р”Р»СЏ РїСЂРѕСЃРјРѕС‚СЂР° РіСЂР°С„РёРєР° РёР·РјРµРЅРµРЅРёР№ РѕС‡РµСЂРµРґРё РїСЂРѕС†РµСЃСЃРѕРІ<BR>"
+                           "&nbsp;&nbsp;&nbsp;&nbsp;РІРѕ РІСЂРµРјРµРЅРё РёСЃРїРѕР»СЊР·СѓР№С‚Рµ <B>Р“СЂР°С„РёРє РѕС‡РµСЂРµРґРё</B> РёР· РјРµРЅСЋ<BR>"
+                           "&nbsp;&nbsp;&nbsp;&nbsp;<B>РџСЂРѕС†РµСЃСЃС‹</B>.</P>"
+                           "<P>&nbsp;&nbsp;&nbsp;&nbsp;Р”Р»СЏ РёР·РјРµРЅРµРЅРёСЏ РёРЅС‚РµСЂРІР°Р»Р° РїРµСЂРµСЃС‡С‘С‚Р° РїСЂРёРѕСЂРёС‚РµС‚Р°<BR>"
+                           "&nbsp;&nbsp;&nbsp;&nbsp;Р·Р°Р№РґРёС‚Рµ РІ РјРµРЅСЋ <B>РќР°СЃС‚СЂРѕР№РєРё</B> Рё РІС‹Р±РµСЂРёС‚Рµ РїСѓРЅРєС‚<BR>"
+                           "&nbsp;&nbsp;&nbsp;&nbsp;<B>РџР°СЂР°РјРµС‚СЂС‹</B>. РћР±СЂР°С‚РёС‚Рµ РІРЅРёРјР°РЅРёРµ, С‡С‚Рѕ РёРЅС‚РµСЂРІР°Р»<BR>"
+                           "&nbsp;&nbsp;&nbsp;&nbsp;РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ СЂР°РІРµРЅ 1!<BR></P>"
                            ));
-    lhelp->setFixedSize(300,340);
-    lhelp->setWindowTitle(tr("Помощь"));
+    lhelp->setFixedSize(300,330);
+    lhelp->setWindowTitle(tr("РџРѕРјРѕС‰СЊ"));
+
     //=======================================================
 
-
-
-        mainLayout->addWidget(disp);
-    //   mainLayout->addWidget(opt);
-        mainWidget->setLayout(mainLayout);
-        setCentralWidget(mainWidget);
-
-
-
 }
+
 //==================================================
-//=========== надпись с инфой о программе ==========
 //==================================================
 void Mwgt::label_program()
 {
     lprogram->show();
 }
+
 //==================================================
-//========== надпись с инфой о разработчике ========
 //==================================================
 void Mwgt::label_developer()
 {
     ldeveloper->show();
 }
+
 //==================================================
-//============ надпись со справкой =================
 //==================================================
 void Mwgt::label_help()
 {
     lhelp->show();
 }
 
-
+//==================================================
+//==================================================
 void Mwgt::options()
 {
     opt->show();
 }
 
+//==================================================
+//==================================================
+void Mwgt::slotSTOP()
+{
+    // РґР»СЏ СЃР±СЂРѕСЃР° РїСЂРѕСЃС‚Рѕ СѓРґР°Р»СЏРµРј РґРёСЃРїРµС‚С‡РµСЂ Рё РѕС‡РµСЂРµРґСЊ
+    // Рё СЃРѕР·РґР°С‘Рј РёС… Р·Р°РЅРѕРІРѕ
+    // РЅРµ Р·Р°Р±С‹РІР°РµРј СЃРѕРµРґРёРЅРёС‚СЊ СЃРёРіРЅР°Р»С‹ Рё СЃР»РѕС‚С‹
+    delete disp;
+    disp = new Disp();
+    connect(opt, SIGNAL(sendDO(QVector <int>)), disp, SLOT(slotDO(QVector <int>)));
+    mainLayout->addWidget(disp);
 
+    delete wque;
+    wque = new Wqueue();
+    connect(disp, SIGNAL(signalQueue(int,QColor)), wque, SLOT(SlotQueue(int,QColor)));
+    wque->setMinimumSize(400,200);
+    qsa->resize(605, 305);
+    qsa->setWidget(wque);
+
+}
 
 //==================================================
-//================== деструктор ====================
+//==================================================
+void Mwgt::opsteps()
+{
+    ost->show();
+}
+
+//==================================================
+//==================================================
+void Mwgt::opwqueue()
+{
+    qsa->show();
+}
+
+//==================================================
 //==================================================
 Mwgt::~Mwgt()
 {
@@ -168,6 +221,12 @@ Mwgt::~Mwgt()
     delete mainLayout;
 
     delete mainWidget;
+
+    delete disp;
+    delete opt;
+    delete ost;
+    delete wque;
+    delete qsa;
 
 }
 //==============================================================================
