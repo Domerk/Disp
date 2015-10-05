@@ -3,13 +3,10 @@
 lexer::lexer(QObject *parent)
     : QObject(parent)
 {
-
     keyword = new QRegularExpression("\\b(if|then|else)\\b"); // ключевые слова
     number = new QRegularExpression("\\bM{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})\\b"); // латинские цифры
     identifier = new QRegularExpression("\\b([a-zA-Z]+\\w*)+\\b"); // идентификаторы
     comparisonSign = new QRegularExpression("\\b(<|>|=)\\b"); // знаки сравнения
-
-
 }
 
 void lexer::textSlot (QString newText)
@@ -23,97 +20,94 @@ void lexer::textSlot (QString newText)
     analyze();
 }
 
+void lexer::addLexToTable(QString nLex, QString nType)
+{
+    Lexeme lex;
+    lex.lexeme = nLex;
+    lex.type = nType;
+    lexTable.append(lex);
+}
+
 void lexer::analyze()
 {
     // разделим исходную строку на подстроки
-    QStringList qsl = text.split(QRegularExpression("\\b"));
+    QStringList qsl = text.split(QRegularExpression("\\b"), QString::SkipEmptyParts);
     bool isComment = false;
 
     // проанализируем подстроки на предмет того, являются ли они лексемами
     for (QString & newLex : qsl)
     {
-
-        if (isComment && newLex != "*/")
-        {
-            continue;
-        }
-        else
-        {
-            isComment = false;
-            continue;
-        }
-
-        if (newLex == "/*")
-        {
-            isComment = true;
-            continue;
-        }
-
         newLex = newLex.trimmed();
         if (!newLex.isEmpty())
         {
-            // тут будет всякий код
+            if (isComment && newLex != "*/")
+                continue;
+
+            if (newLex == "*/")
+            {
+                isComment = false;
+                continue;
+            }
+
+            if (newLex == "/*")
+            {
+                isComment = true;
+                continue;
+            }
 
             if (newLex == ":=")
             {
-                Lexeme lex;
-                lex.lexeme = newLex;
-                lex.type = "Assignment";
-                lexTable.append(lex);
+                addLexToTable(newLex, "Assignment");
+                continue;
+            }
+
+            if (newLex == ";")
+            {
+                addLexToTable(newLex, "Separator");
                 continue;
             }
 
             QRegularExpressionMatch match = keyword->match(newLex);
             if (match.hasMatch())
             {
-                Lexeme lex;
-                lex.lexeme = newLex;
-                lex.type = "Keyword";
-                lexTable.append(lex);
+                addLexToTable(newLex, "Keyword");
                 continue;
             }
 
             match = number->match(newLex);
             if (match.hasMatch())
             {
-                Lexeme lex;
-                lex.lexeme = newLex;
-                lex.type = "Number";
-                lexTable.append(lex);
+                addLexToTable(newLex, "Number");
                 continue;
             }
 
             match = identifier->match(newLex);
             if (match.hasMatch())
             {
-                Lexeme lex;
-                lex.lexeme = newLex;
-                lex.type = "Identifier";
-                lexTable.append(lex);
+                addLexToTable(newLex, "Identifier");
                 continue;
             }
 
             match = comparisonSign->match(newLex);
             if (match.hasMatch())
             {
-                Lexeme lex;
-                lex.lexeme = newLex;
-                lex.type = "Comparison Sign";
-                lexTable.append(lex);
+                addLexToTable(newLex, "Comparison Sign");
                 continue;
             }
 
-
+            thisIsFail.append(newLex);
 
         }
     }
+
+    result();
 
 }
 
 void lexer::result()
 {
     QString rpt;
-    rpt.append(tr("<table border=1><tr><td>Лексема</td><td>Тип лексемы</td></tr>"));
+    rpt.append(tr("<table border=1 width='200' text align='center'><tr><td><b>Лексема</b></td><td><b>Тип лексемы</b></td></tr>"));
 
     for (Lexeme & newLex : lexTable)
     {

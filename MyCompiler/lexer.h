@@ -33,6 +33,7 @@ protected:
 
     void analyze();
     void result();
+    void addLexToTable(QString nLex, QString nType);
 
 public slots:
     void textSlot (QString newText); // слот, принимающий текст для анализа
