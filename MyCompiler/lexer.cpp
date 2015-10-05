@@ -19,6 +19,7 @@ void lexer::textSlot (QString newText)
     thisIsFail.clear();
 
     analyze();
+    result();
 }
 
 void lexer::addLexToTable(QString nLex, QString nType)
@@ -96,12 +97,25 @@ void lexer::analyze()
                 continue;
             }
 
-            thisIsFail.append(newLex);
+            bool thisFailExist = false;
+            if (!thisIsFail.empty())
+            {
+                for (QString & fail : thisIsFail)
+                {
+                    if (fail == newLex)
+                    {
+                        thisFailExist = true;
+                    }
+                }
+            }
+
+            if (!thisFailExist)
+            {
+                thisIsFail.append(newLex);
+            }
 
         }
     }
-
-    result();
 
 }
 
@@ -132,6 +146,9 @@ void lexer::result()
     {
         QString correctText = textCopy;
         QString newStr;
+
+        correctText.replace("<", "&lt;");
+        correctText.replace(">", "&gt;");
 
         for (QString & oldStr : thisIsFail)
         {
