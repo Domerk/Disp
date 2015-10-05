@@ -25,6 +25,7 @@ protected:
     QVector <Lexeme> lexTable; // таблица лексем
     QVector <QString> thisIsFail; // подстроки, содержащие ошибки
     QString text; // исходный текст
+    QString textCopy;
 
     QRegularExpression* keyword; // ключевые слова
     QRegularExpression* number; // латинские цифры
@@ -40,6 +41,7 @@ public slots:
 
 signals:
     void tableSignal (QString); // сигнал, передающий таблицу лексем в виде строки
+    void failSignal (QString);
 
 };
 

@@ -3,15 +3,16 @@
 lexer::lexer(QObject *parent)
     : QObject(parent)
 {
-    keyword = new QRegularExpression("\\b(if|then|else)\\b"); // ключевые слова
-    number = new QRegularExpression("\\bM{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})\\b"); // латинские цифры
-    identifier = new QRegularExpression("\\b([a-zA-Z]+\\w*)+\\b"); // идентификаторы
-    comparisonSign = new QRegularExpression("\\b(<|>|=)\\b"); // знаки сравнения
+    keyword = new QRegularExpression("^(if|then|else)$"); // ключевые слова
+    number = new QRegularExpression("^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$"); // латинские цифры
+    identifier = new QRegularExpression("^([a-zA-Z]+\\w*)+$"); // идентификаторы
+    comparisonSign = new QRegularExpression("^(<|>|=)$"); // знаки сравнения
 }
 
 void lexer::textSlot (QString newText)
 {
     text = newText;
+    textCopy = newText;
     text = text.simplified(); // удаляем пробелы в начале и в конце строки, а так же заменяем двойные пробелы одиночными
 
     lexTable.clear();
@@ -107,12 +108,17 @@ void lexer::analyze()
 void lexer::result()
 {
     QString rpt;
-    rpt.append(tr("<table border=1 width='200' text align='center'><tr><td><b>Лексема</b></td><td><b>Тип лексемы</b></td></tr>"));
+    rpt.append(tr("<table border=1 width='200' align='center' cellpadding=5><tr><td><b>Лексема</b></td><td><b>Тип лексемы</b></td></tr>"));
 
     for (Lexeme & newLex : lexTable)
     {
         rpt.append("<tr><td>");
-        rpt.append(newLex.lexeme);
+
+        if (newLex.lexeme == "<")
+            rpt.append("&lt;");
+        else
+            rpt.append(newLex.lexeme);
+
         rpt.append("</td><td>");
         rpt.append(newLex.type);
         rpt.append("</td></tr>");
@@ -120,6 +126,26 @@ void lexer::result()
     rpt.append("</table>");
 
     emit tableSignal(rpt);
+
+    // если в ходе лексического анализа возникли ошибки
+    if (!thisIsFail.empty())
+    {
+        QString correctText = textCopy;
+        QString newStr;
+
+        for (QString & oldStr : thisIsFail)
+        {
+            newStr.append("<b><FONT COLOR=RED>");
+            newStr.append(oldStr);
+            newStr.append("</FONT></b>");
+
+            correctText.replace(oldStr, newStr);
+            correctText.replace("\n", "<br>");
+
+        }
+
+        emit failSignal(correctText);
+    }
 
 }
 
