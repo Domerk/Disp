@@ -138,12 +138,10 @@ void lexer::result()
             newStr.append("<b><FONT COLOR=RED>");
             newStr.append(oldStr);
             newStr.append("</FONT></b>");
-
             correctText.replace(oldStr, newStr);
-            correctText.replace("\n", "<br>");
-
         }
 
+        correctText.replace("\n", "<br>");
         emit failSignal(correctText);
     }
 
