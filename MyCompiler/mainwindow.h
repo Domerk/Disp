@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QLabel>
+#include <QMessageBox>
+#include <QFont>
 #include <QString>
 #include <lexer.h>
 
@@ -23,6 +25,8 @@ private:
     lexer* MyLexer;
 
     QLabel* LexTableView;
+    QMessageBox* messbox;
+
 
 private slots:
     void on_pushButton_clicked();
@@ -30,6 +34,7 @@ private slots:
 
 public slots:
     void resultsOfLexer(QString);
+    void lexicalError(QString);
 
 signals:
     void toLexer(QString);
