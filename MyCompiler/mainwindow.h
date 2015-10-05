@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QLabel>
 #include <QString>
 #include <lexer.h>
 
@@ -21,8 +22,14 @@ private:
     Ui::MainWindow *ui;
     lexer* MyLexer;
 
+    QLabel* LexTableView;
+
 private slots:
     void on_pushButton_clicked();
+    void on_pushButton_2_clicked();
+
+public slots:
+    void resultsOfLexer(QString);
 
 signals:
     void toLexer(QString);
