@@ -35,7 +35,7 @@ void lexer::analyze()
     // разделим исходную строку на подстроки
     // получаем список строк, каждая из которых - слово
     // параметр QString::SkipEmptyParts запрещает создание пустых строк
-    QStringList qsl = text.split(QRegularExpression("\\b"), QString::SkipEmptyParts);
+    QStringList qsl = text.split(QRegularExpression("(\\b|\\s)"), QString::SkipEmptyParts);
     bool isComment = false; // флаг налиячия комментария - не комментарий
 
     // проанализируем подстроки на предмет того, являются ли они лексемами
@@ -57,13 +57,6 @@ void lexer::analyze()
             {
                 isComment = true; // ставим флаг
                 continue;
-            }
-
-            // Да, это такой фикс
-            if (newLex == "; /*" || newLex == ";/*")
-            {
-                newLex = ";";
-                isComment = true;
             }
 
             if (newLex == ":=")
@@ -173,6 +166,11 @@ void lexer::result()
 
         correctText.replace("\n", "<br>"); // заменяем обычный перенос строки html-переносом
         emit failSignal(correctText); // отправляем
+    }
+    else
+    {
+        // если лексических ошибок нет, можно передать инфу синтаксическому анализатору
+        emit lexTableSignal(lexTable);
     }
 
 }

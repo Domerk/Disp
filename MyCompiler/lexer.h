@@ -42,6 +42,7 @@ public slots:
 signals:
     void tableSignal (QString); // сигнал, передающий таблицу лексем в виде строки
     void failSignal (QString);
+    void lexTableSignal(QVector);
 
 };
 
