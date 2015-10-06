@@ -8,6 +8,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     MyLexer = new lexer();
+    MyParser = new parser();
     LexTableView = new QLabel();
 
     QFont font = LexTableView->font();
@@ -21,6 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, SIGNAL(toLexer(QString)), MyLexer, SLOT(textSlot(QString)));
     connect (MyLexer, SIGNAL(tableSignal(QString)), this, SLOT(resultsOfLexer(QString)));
     connect (MyLexer, SIGNAL(failSignal(QString)), this, SLOT(lexicalError(QString)));
+    connect (MyLexer, SIGNAL(lexTableSignal(QVector)), MyParser, SLOT(lexTableSlot(QVector)));
 
 }
 
@@ -54,5 +56,5 @@ void MainWindow::lexicalError(QString txt)
     messbox->setWindowTitle(tr("Сообщение об ошибке"));
     messbox->show();
 
-    ui->textEdit->setHtml(txt);
+    ui->textEdit->setHtml(txt); // заменяем исходный текст его копией с выделенными ошибками
 }

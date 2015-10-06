@@ -7,6 +7,7 @@
 #include <QFont>
 #include <QString>
 #include <lexer.h>
+#include <parser.h>
 
 namespace Ui {
 class MainWindow;
@@ -23,6 +24,7 @@ public:
 private:
     Ui::MainWindow *ui;
     lexer* MyLexer;
+    parser* MyParser;
 
     QLabel* LexTableView;
     QMessageBox* messbox;
