@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include <QObject>
+#include <QVector>
 
 class parser: public QObject
 {
@@ -20,8 +21,18 @@ public:
 protected:
     QVector <Lexeme> lexTable; // таблица лексем
 
+    void analize();
+
+    bool thisIsS(QVector <Lexeme>);
+    bool thisIsF(QVector <Lexeme>);
+    bool thisIsT(QVector <Lexeme>);
+    bool thisIsE(QVector <Lexeme>);
+
 public slots:
-    void lexTableSlot(QVector);
+    void lexTableSlot(QVector <Lexeme>);
+
+signals:
+    void parsError();
 
 };
 
