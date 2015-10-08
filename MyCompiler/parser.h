@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QVector>
+#include <QString>
 
 class parser: public QObject
 {
@@ -30,9 +31,10 @@ protected:
 
 public slots:
     void lexTableSlot(QVector <Lexeme>);
+    void startParser();
 
 signals:
-    void parsError();
+    void parsError(QString);
 
 };
 

@@ -16,26 +16,49 @@ void parser::lexTableSlot(QVector<Lexeme> tl)
     lexTable = tl;
 }
 
+void parser::startParser()
+{
+    if (!lexTable.isEmpty())
+        analize();
+    else
+        emit parsError(tr("Отсутсвуют данные лексического анализа!"));
+}
+
 void parser::analize()
 {
     QVector <Lexeme> Str;
+    bool separatorExist = false;
 
     for (Lexeme & newLex : lexTable)
     {
         Str.append(newLex);
         if (newLex.type == "Separator")
         {
+            separatorExist = true;
+
             if (thisIsS(Str) == true)
             {
                 Str.clear();
             }
             else
             {
-                emit parsError();
+                QString errorTxt;
+                errorTxt.append(tr("Строка c ошибкой: "));
+
+                for (Lexeme & lx : Str)
+                {
+                    errorTxt.append(lx.lexeme);
+                    errorTxt.append(" ");
+                }
+
+                emit parsError(errorTxt);
                 break;
             }
         }
     }
+
+    if (!separatorExist)
+        emit parsError(tr("Отсутсвует ';' !"));
 }
 
 
