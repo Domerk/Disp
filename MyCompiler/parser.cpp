@@ -27,6 +27,7 @@ void parser::startParser()
 void parser::analize()
 {
     QVector <Lexeme> Str;
+    QString errorTxt;
     bool separatorExist = false;
 
     for (Lexeme & newLex : lexTable)
@@ -42,20 +43,34 @@ void parser::analize()
             }
             else
             {
-                QString errorTxt;
-                errorTxt.append(tr("Строка c ошибкой: "));
+                if (errorTxt.isEmpty())
+                    errorTxt.append(tr("Список ошибок: <br>"));
+                else
+                    errorTxt.append("<br>");
 
                 for (Lexeme & lx : Str)
                 {
-                    errorTxt.append(lx.lexeme);
+                    if (lx.lexeme == "<")
+                    {
+                        errorTxt.append("&lt;");
+                    }
+                    else
+                    {
+                        if(lx.lexeme == ">")
+                            errorTxt.append("&gt;");
+                        else
+                            errorTxt.append(lx.lexeme);
+                    }
                     errorTxt.append(" ");
                 }
 
-                emit parsError(errorTxt);
-                break;
+                Str.clear();
             }
         }
     }
+
+    if (!errorTxt.isEmpty())
+        emit parsError(errorTxt);
 
     if (!separatorExist)
         emit parsError(tr("Отсутсвует ';' !"));
@@ -71,11 +86,8 @@ bool parser::thisIsS(QVector<Lexeme> S)
         S.resize(n-1);
         return thisIsF(S);
     }
-    else
-    {
-        return false;
-    }
 
+    return false;
 }
 
 bool parser::thisIsF(QVector<Lexeme> F)
@@ -83,30 +95,75 @@ bool parser::thisIsF(QVector<Lexeme> F)
     /* Выражение является F, если удовляетворяет условию:
        if E then T else F | if E then F | a := a        */
 
-     int n = F.size();
-     if (n > 2)
-     {
-         if (n == 3)
-         {
-             return (F[0].type == "Identifier" && F[1].type == "Assignment" && (F[2].type == "Identifier" || F[2].type == "Number"));
-         }
-         else
-         {
-             if (F[0].lexeme == "if")
-             {
+    bool u1 = false;
+    bool u2 = false;
+    bool u3 = false;
 
-             }
-             else
-             {
-                 return false;
-             }
-         }
+    QVector <Lexeme> forE;
+    QVector <Lexeme> forT;
+    QVector <Lexeme> forF;
 
-     }
-     else
-     {
-        return false;
-     }
+    int n = F.size();
+    if (n > 2)
+    {
+        if (n == 3)
+        {
+            return (F[0].type == "Identifier" && F[1].type == "Assignment" && (F[2].type == "Identifier" || F[2].type == "Number"));
+        }
+        else
+        {
+            if (F[0].lexeme == "if")
+            {
+                int i = 1;
+                int f = 1;
+                while (i<n && F[i].lexeme != "then")
+                {
+                    forE.append(F[i]);
+                    i++;
+                }
+                u1 = thisIsE(forE);
+
+                // далее необходимо определить, есть ли у нас else
+
+                i++;
+                while (i<n && f!=0)
+                {
+                    forT.append(F[i]);
+
+                    if(F[i].lexeme == "if")
+                        f++;
+
+                    if(F[i].lexeme == "else")
+                        f--;
+
+                    i++;
+                }
+
+                // если f = 0, значит, мы не дошли до конца вектора
+                // но при этом нашли else
+                if (f == 0)
+                {
+                    u2 = thisIsT(forT);
+                    while (i<n)
+                    {
+                        forF.append(F[i]);
+                        i++;
+                    }
+                    u3 = thisIsF(forF);
+
+                    return (u1 && u2 && u3);
+                }
+                else
+                {
+                    u2 = thisIsF(forT);
+                    return (u1 && u2);
+                }
+            }
+        }
+
+    }
+
+    return false;
 
 }
 
@@ -115,9 +172,9 @@ bool parser::thisIsT(QVector<Lexeme> T)
     /* Выражение является T, если удовлетворяет условию
        if E then T else T | a := a  */
 
-    bool u1 = false; // для проверки, что if - then - else
-    bool u2 = false; // для проверки, что E
-    bool u3 = false; // для проверки, что Т
+    bool u1 = false;
+    bool u2 = false;
+    bool u3 = false;
 
     QVector <Lexeme> forE;
     QVector <Lexeme> forT1;
@@ -137,27 +194,44 @@ bool parser::thisIsT(QVector<Lexeme> T)
             if (T[0].lexeme == "if")
             {
                 int i = 1;
-                while (T[i].lexeme != "then" && i<n)
+                int f = 1;
+                while (i<n && T[i].lexeme != "then")
                 {
                     forE.append(T[i]);
                     i++;
                 }
-                u2 = thisIsE(forE);
+                u1 = thisIsE(forE);
 
-            }
-            else
-            {
-                return false;
+                i++;
+                while (i<n && f!=0)
+                {
+                    forT1.append(T[i]);
+                    i++;
+
+                    if(T[i].lexeme == "if")
+                        f++;
+
+                    if(T[i].lexeme == "else")
+                        f--;
+                }
+                u2 = thisIsT(forT1);
+
+                i++;
+                while (i<n)
+                {
+                    forT2.append(T[i]);
+                    i++;
+                }
+                u3 = thisIsT(forT2);
+
+                return (u1 && u2 && u3);
+
             }
         }
-
     }
-    else
-    {
-       return false;
-    }
-
+    return false;
 }
+
 
 bool parser::thisIsE(QVector<Lexeme> E)
 {
@@ -169,11 +243,8 @@ bool parser::thisIsE(QVector<Lexeme> E)
     {
         return ((E[0].type == "Identifier" || E[0].type == "Number") && E[1].type == "Comparison Sign" && (E[2].type == "Identifier" || E[2].type == "Number"));
     }
-    else
-    {
-        return false;
-    }
 
+    return false;
 }
 
 
