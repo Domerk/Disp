@@ -10,16 +10,24 @@ MainWindow::MainWindow(QWidget *parent) :
     MyLexer = new lexer();
     MyParser = new parser();
     LexTableView = new QLabel();
+    TreeView = new QLabel();
 
     QFont font = LexTableView->font();
     font.setPixelSize(12);
     LexTableView->setFont(font);
     LexTableView->setWindowTitle(tr("Таблица лексем"));
+    LexTableView->setAlignment(Qt::AlignCenter);
+
+    TreeView->setFont(font);
+    TreeView->setWindowTitle(tr("Дерево вывода"));
+    TreeView->setAlignment(Qt::AlignCenter);
 
     messbox = new QMessageBox();
     messbox->setFont(font);
 
+    ui->pushButton_2->setEnabled(false);
     ui->pushButton_3->setEnabled(false);
+    ui->pushButton_4->setEnabled(false);
 
     connect(this, SIGNAL(toLexer(QString)), MyLexer, SLOT(textSlot(QString)));
     connect (MyLexer, SIGNAL(tableSignal(QString)), this, SLOT(resultsOfLexer(QString)));
@@ -27,16 +35,18 @@ MainWindow::MainWindow(QWidget *parent) :
     connect (MyLexer, SIGNAL(lexTableSignal(QVector<Lexeme>)), MyParser, SLOT(lexTableSlot(QVector<Lexeme>)));
     connect (this, SIGNAL(startParser()), MyParser, SLOT(startParser()));
     connect (MyParser, SIGNAL(parsError(QString)), this, SLOT(parsError(QString)));
+    connect (MyParser, SIGNAL(parsResult(QString)), this, SLOT(parsResult(QString)));
 
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
     delete MyLexer;
     delete MyParser;
     delete LexTableView;
     delete messbox;
+    delete TreeView;
+    delete ui;
 }
 
 void MainWindow::on_pushButton_clicked()
@@ -61,6 +71,7 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::resultsOfLexer(QString forTable)
 {
     LexTableView->setText(forTable);
+    ui->pushButton_2->setEnabled(true);
     ui->pushButton_3->setEnabled(true);
 }
 
@@ -80,7 +91,15 @@ void MainWindow::parsError(QString errorTxt)
     messbox->setText(errorTxt);
     messbox->setWindowTitle(tr("Сообщение об ошибке"));
     messbox->show();
-
 }
 
+void MainWindow::parsResult(QString tree)
+{
+    TreeView->setText(tree);
+    ui->pushButton_4->setEnabled(true);
+}
 
+void MainWindow::on_pushButton_4_clicked()
+{
+    TreeView->show();
+}

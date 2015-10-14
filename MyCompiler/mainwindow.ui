@@ -60,17 +60,34 @@
            </font>
           </property>
           <property name="text">
-           <string>Показать таблицу лексем</string>
+           <string>Таблица лексем</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="pushButton_3">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>Синтаксический анализ</string>
           </property>
           <property name="checkable">
            <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_4">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Дерево вывода</string>
           </property>
          </widget>
         </item>

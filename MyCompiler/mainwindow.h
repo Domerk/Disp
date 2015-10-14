@@ -27,6 +27,7 @@ private:
     parser* MyParser;
 
     QLabel* LexTableView;
+    QLabel* TreeView;
     QMessageBox* messbox;
 
 
@@ -36,10 +37,13 @@ private slots:
 
     void on_pushButton_3_clicked();
 
+    void on_pushButton_4_clicked();
+
 public slots:
     void resultsOfLexer(QString);
     void lexicalError(QString);
     void parsError(QString);
+    void parsResult(QString);
 
 signals:
     void toLexer(QString);

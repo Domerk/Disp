@@ -13,67 +13,72 @@ parser::~parser()
 
 void parser::lexTableSlot(QVector<Lexeme> tl)
 {
-    lexTable = tl;
+    lexTable = tl; // Получаем таблицу лексем
 }
 
 void parser::startParser()
 {
     if (!lexTable.isEmpty())
+    {
         analize();
+        result();
+    }
     else
+    {
         emit parsError(tr("Отсутсвуют данные лексического анализа!"));
+    }
 }
 
 void parser::analize()
 {
     QVector <Lexeme> Str;
-    QString errorTxt;
-    bool separatorExist = false;
+    QString errorTxt; // Строка с сообщением об ошибке
+    bool separatorExist = false; // Наличие разделителя
 
     for (Lexeme & newLex : lexTable)
     {
-        Str.append(newLex);
-        if (newLex.type == "Separator")
+        Str.append(newLex); // Добавляем в вектор лексему
+        if (newLex.type == "Separator") // Если это разделитель
         {
-            separatorExist = true;
+            separatorExist = true; // Поднимаем флаг
 
+            // Проверям, является ли строка синтаксически правильной
             if (thisIsS(Str) == true)
             {
-                Str.clear();
+                Str.clear(); // Если всё хорошо, чистим её
             }
             else
             {
-                if (errorTxt.isEmpty())
+                if (errorTxt.isEmpty()) // иначе если список ошибок пуст
                     errorTxt.append(tr("Список ошибок: <br>"));
                 else
-                    errorTxt.append("<br>");
+                    errorTxt.append("<br>"); // иначе просто добавляем перенос
 
-                for (Lexeme & lx : Str)
+                for (Lexeme & lx : Str) // Для всех лексем в ошибочной строке
                 {
-                    if (lx.lexeme == "<")
+                    if (lx.lexeme == "<") // Заменяем < на тег
                     {
                         errorTxt.append("&lt;");
                     }
                     else
                     {
-                        if(lx.lexeme == ">")
+                        if(lx.lexeme == ">") // Заменяем > на тег
                             errorTxt.append("&gt;");
                         else
-                            errorTxt.append(lx.lexeme);
+                            errorTxt.append(lx.lexeme); // Добавляем лексему
                     }
-                    errorTxt.append(" ");
+                    errorTxt.append(" "); // Добавляем пробел
                 }
 
-                Str.clear();
+                Str.clear(); // Очищаем строку
             }
         }
     }
+    if (!separatorExist) // Если нет ;, то сообщаем об этом
+        errorTxt.append(tr("Отсутсвует ';' !"));
 
-    if (!errorTxt.isEmpty())
-        emit parsError(errorTxt);
-
-    if (!separatorExist)
-        emit parsError(tr("Отсутсвует ';' !"));
+    if (!errorTxt.isEmpty()) // Если есть сообщение об ошибке
+        emit parsError(errorTxt); // То оправляем его
 }
 
 
@@ -84,13 +89,13 @@ bool parser::thisIsS(QVector<Lexeme> S)
     if (n > 3 && S[n-1].type == "Separator")
     {
         S.resize(n-1);
-        return thisIsF(S);
+        int layer = 0;
+        return thisIsF(S, layer);
     }
-
     return false;
 }
 
-bool parser::thisIsF(QVector<Lexeme> F)
+bool parser::thisIsF(QVector<Lexeme> F, int layer)
 {
     /* Выражение является F, если удовляетворяет условию:
        if E then T else F | if E then F | a := a        */
@@ -104,38 +109,67 @@ bool parser::thisIsF(QVector<Lexeme> F)
     QVector <Lexeme> forF;
 
     int n = F.size();
-    if (n > 2)
+    if (n > 2) // Если в строке есть не менее 3 элементов
     {
-        if (n == 3)
+        if (n == 3) // Если элемента всего 3, то это строка a := a
         {
-            return (F[0].type == "Identifier" && F[1].type == "Assignment" && (F[2].type == "Identifier" || F[2].type == "Number"));
+            // Проверяем, так ли это, и возвращаем результат
+            bool result = (F[0].type == "Identifier" && F[1].type == "Assignment" && (F[2].type == "Identifier" || F[2].type == "Number"));
+
+            if (result)
+            {
+                addInTree(F, "F", true, layer);
+            }
+            return result;
+
         }
         else
         {
-            if (F[0].lexeme == "if")
+            if (F[0].lexeme == "if") // Иначе есть первая лексема - if
             {
+                QVector <Lexeme> vct;
+                vct.append(F[0]);
+                addInTree(vct, "F", false, layer);
+                vct.clear();
+
                 int i = 1;
                 int f = 1;
-                while (i<n && F[i].lexeme != "then")
+                while (i<n && F[i].lexeme != "then") // Пока не нашли then или недошли до конца
                 {
-                    forE.append(F[i]);
+                    forE.append(F[i]); // Заносим элементы в подстроку
                     i++;
                 }
-                u1 = thisIsE(forE);
+
+                vct.append(F[i]);
+                addInTree(vct, "F", false, layer);
+                vct.clear();
+
+                u1 = thisIsE(forE, layer+1); // Отправляем её на проверку и сохраняем результат
 
                 // далее необходимо определить, есть ли у нас else
 
                 i++;
-                while (i<n && f!=0)
-                {
-                    forT.append(F[i]);
 
+                while (i<n && f!=0) // Пока не дошли до конца или не нашли нужный else
+                {
                     if(F[i].lexeme == "if")
-                        f++;
+                        f++; // Увеличиваем флаг
 
                     if(F[i].lexeme == "else")
+                    {
                         f--;
+                        if (f != 0)
+                        {
+                            forT.append(F[i]); // Заносим элементы в подстроку
+                        }
+                        else
+                        {
+                            vct.append(F[i]);
+                            addInTree(vct, "F", false, layer);
+                            vct.clear();
+                        }
 
+                    }
                     i++;
                 }
 
@@ -143,31 +177,28 @@ bool parser::thisIsF(QVector<Lexeme> F)
                 // но при этом нашли else
                 if (f == 0)
                 {
-                    u2 = thisIsT(forT);
+                    u2 = thisIsT(forT, layer+1); // Формируем последнюю часть строки
                     while (i<n)
                     {
                         forF.append(F[i]);
                         i++;
                     }
-                    u3 = thisIsF(forF);
+                    u3 = thisIsF(forF, layer+1); // Отправляем на проверку
 
-                    return (u1 && u2 && u3);
+                    return (u1 && u2 && u3); // Возвращаем результат
                 }
                 else
                 {
-                    u2 = thisIsF(forT);
-                    return (u1 && u2);
+                    u2 = thisIsF(forT, layer+1); // Иначе считаем, что if E then F
+                    return (u1 && u2); // Возвращаем результат
                 }
             }
         }
-
     }
-
     return false;
-
 }
 
-bool parser::thisIsT(QVector<Lexeme> T)
+bool parser::thisIsT(QVector<Lexeme> T, int layer)
 {
     /* Выражение является T, если удовлетворяет условию
        if E then T else T | a := a  */
@@ -187,12 +218,23 @@ bool parser::thisIsT(QVector<Lexeme> T)
     {
         if (n == 3)
         {
-            return (T[0].type == "Identifier" && T[1].type == "Assignment" && (T[2].type == "Identifier" || T[2].type == "Number"));
+            bool result = (T[0].type == "Identifier" && T[1].type == "Assignment" && (T[2].type == "Identifier" || T[2].type == "Number"));
+
+            if (result)
+            {
+                addInTree(T, "T", true, layer);
+            }
+            return result;
         }
         else
         {
             if (T[0].lexeme == "if")
             {
+                QVector<Lexeme> vct;
+                vct.append(T[0]);
+                addInTree(vct, "T", false, layer);
+                vct.clear();
+
                 int i = 1;
                 int f = 1;
                 while (i<n && T[i].lexeme != "then")
@@ -200,21 +242,37 @@ bool parser::thisIsT(QVector<Lexeme> T)
                     forE.append(T[i]);
                     i++;
                 }
-                u1 = thisIsE(forE);
 
+                vct.append(T[i]);
+                addInTree(vct, "T", false, layer);
+                vct.clear();
+
+                u1 = thisIsE(forE, layer+1);
                 i++;
+
                 while (i<n && f!=0)
                 {
-                    forT1.append(T[i]);
-                    i++;
-
                     if(T[i].lexeme == "if")
                         f++;
 
                     if(T[i].lexeme == "else")
+                    {
                         f--;
+                        if (f != 0)
+                        {
+                            forT1.append(T[i]); // Заносим элементы в подстроку
+                        }
+                        else
+                        {
+                            vct.append(T[i]);
+                            addInTree(vct, "T", false, layer);
+                            vct.clear();
+                        }
+
+                    }
+                    i++;
                 }
-                u2 = thisIsT(forT1);
+                u2 = thisIsT(forT1, layer+1);
 
                 i++;
                 while (i<n)
@@ -222,10 +280,9 @@ bool parser::thisIsT(QVector<Lexeme> T)
                     forT2.append(T[i]);
                     i++;
                 }
-                u3 = thisIsT(forT2);
+                u3 = thisIsT(forT2, layer+1);
 
                 return (u1 && u2 && u3);
-
             }
         }
     }
@@ -233,7 +290,7 @@ bool parser::thisIsT(QVector<Lexeme> T)
 }
 
 
-bool parser::thisIsE(QVector<Lexeme> E)
+bool parser::thisIsE(QVector<Lexeme> E, int layer)
 {
     /* Выражение является Е, если удовлетворяет условию
      * a < a | a > a | a = a */
@@ -241,16 +298,53 @@ bool parser::thisIsE(QVector<Lexeme> E)
     int n = E.size();
     if (n == 3)
     {
-        return ((E[0].type == "Identifier" || E[0].type == "Number") && E[1].type == "Comparison Sign" && (E[2].type == "Identifier" || E[2].type == "Number"));
+        bool result = ((E[0].type == "Identifier" || E[0].type == "Number") && E[1].type == "Comparison Sign" && (E[2].type == "Identifier" || E[2].type == "Number"));
+        if (result)
+        {
+            addInTree(E, "E", true, layer);
+        }
+        return result;
     }
-
     return false;
 }
 
+void parser::result()
+{
+    QString res;
+    if (!tree.isEmpty())
+    {
+        res.append(tr("<table border = 1 cellpadding=5><tr><td><b>Уровень</b></td><td><b>Выражение</b></td><td><b>Правило</b></td></tr>"));
+        for (Element & elem : tree)
+        {
+            res.append("<tr><td>");
+            res.append(QString::number(elem.layer));
+            res.append("</td><td>");
+
+            for (Lexeme & lex : elem.expression)
+            {
+                res.append(lex.lexeme);
+                res.append(" ");
+            }
+
+            res.append("</td><td>");
+            res.append(elem.type);
+            res.append("</td></tr>");
+
+        }
+        emit parsResult(res);
+    }
+}
 
 
-
-
+void parser::addInTree(QVector <Lexeme> elem, QString type, bool term, int layer)
+{
+    Element newElem;
+    newElem.expression = elem;
+    newElem.layer = layer;
+    newElem.terminate = term;
+    newElem.type = type;
+    tree.append(newElem);
+}
 
 
 
