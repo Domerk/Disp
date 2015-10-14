@@ -127,7 +127,7 @@ void lexer::analyze()
 void lexer::result()
 {
     QString rpt; // формируем строку - таблицу лексем
-    rpt.append(tr("<table border=1 width='200' align='center' cellpadding=5><tr><td><b>Лексема</b></td><td><b>Тип лексемы</b></td></tr>"));
+    rpt.append(tr("<table border=1 cellpadding=5><tr><td><b>Лексема</b></td><td><b>Тип лексемы</b></td></tr>"));
 
     for (Lexeme & newLex : lexTable)
     {
