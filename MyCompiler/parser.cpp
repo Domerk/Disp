@@ -81,6 +81,7 @@ void parser::analize()
         emit parsError(errorTxt); // То оправляем его
 }
 
+// ========================================================
 
 bool parser::thisIsS(QVector<Lexeme> S)
 {
@@ -94,6 +95,8 @@ bool parser::thisIsS(QVector<Lexeme> S)
     }
     return false;
 }
+
+// ========================================================
 
 bool parser::thisIsF(QVector<Lexeme> F, int layer)
 {
@@ -140,11 +143,11 @@ bool parser::thisIsF(QVector<Lexeme> F, int layer)
                     i++;
                 }
 
+                u1 = thisIsE(forE, layer+1); // Отправляем её на проверку и сохраняем результат
+
                 vct.append(F[i]);
                 addInTree(vct, "F", false, layer);
                 vct.clear();
-
-                u1 = thisIsE(forE, layer+1); // Отправляем её на проверку и сохраняем результат
 
                 // далее необходимо определить, есть ли у нас else
 
@@ -156,20 +159,11 @@ bool parser::thisIsF(QVector<Lexeme> F, int layer)
                         f++; // Увеличиваем флаг
 
                     if(F[i].lexeme == "else")
-                    {
                         f--;
-                        if (f != 0)
-                        {
-                            forT.append(F[i]); // Заносим элементы в подстроку
-                        }
-                        else
-                        {
-                            vct.append(F[i]);
-                            addInTree(vct, "F", false, layer);
-                            vct.clear();
-                        }
 
-                    }
+                    if (f != 0)
+                        forT.append(F[i]); // Заносим элементы в подстроку
+
                     i++;
                 }
 
@@ -178,6 +172,11 @@ bool parser::thisIsF(QVector<Lexeme> F, int layer)
                 if (f == 0)
                 {
                     u2 = thisIsT(forT, layer+1); // Формируем последнюю часть строки
+
+                    vct.append(F[i-1]);
+                    addInTree(vct, "F", false, layer);
+                    vct.clear();
+
                     while (i<n)
                     {
                         forF.append(F[i]);
@@ -197,6 +196,8 @@ bool parser::thisIsF(QVector<Lexeme> F, int layer)
     }
     return false;
 }
+
+// ========================================================
 
 bool parser::thisIsT(QVector<Lexeme> T, int layer)
 {
@@ -243,11 +244,12 @@ bool parser::thisIsT(QVector<Lexeme> T, int layer)
                     i++;
                 }
 
+                u1 = thisIsE(forE, layer+1);
+
                 vct.append(T[i]);
                 addInTree(vct, "T", false, layer);
                 vct.clear();
 
-                u1 = thisIsE(forE, layer+1);
                 i++;
 
                 while (i<n && f!=0)
@@ -256,25 +258,21 @@ bool parser::thisIsT(QVector<Lexeme> T, int layer)
                         f++;
 
                     if(T[i].lexeme == "else")
-                    {
                         f--;
-                        if (f != 0)
-                        {
-                            forT1.append(T[i]); // Заносим элементы в подстроку
-                        }
-                        else
-                        {
-                            vct.append(T[i]);
-                            addInTree(vct, "T", false, layer);
-                            vct.clear();
-                        }
 
-                    }
+                    if (f != 0)
+                        forT1.append(T[i]); // Заносим элементы в подстроку
                     i++;
                 }
                 u2 = thisIsT(forT1, layer+1);
 
-                i++;
+                if (f == 0)
+                {
+                    vct.append(T[i-1]);
+                    addInTree(vct, "T", false, layer);
+                    vct.clear();
+                }
+
                 while (i<n)
                 {
                     forT2.append(T[i]);
@@ -289,6 +287,7 @@ bool parser::thisIsT(QVector<Lexeme> T, int layer)
     return false;
 }
 
+// ========================================================
 
 bool parser::thisIsE(QVector<Lexeme> E, int layer)
 {
@@ -308,6 +307,8 @@ bool parser::thisIsE(QVector<Lexeme> E, int layer)
     return false;
 }
 
+// ========================================================
+
 void parser::result()
 {
     QString res;
@@ -322,7 +323,18 @@ void parser::result()
 
             for (Lexeme & lex : elem.expression)
             {
-                res.append(lex.lexeme);
+                if (lex.lexeme == "<") // Заменяем < на тег
+                {
+                    res.append("&lt;");
+                }
+                else
+                {
+                    if(lex.lexeme == ">") // Заменяем > на тег
+                        res.append("&gt;");
+                    else
+                        res.append(lex.lexeme); // Добавляем лексему
+                }
+
                 res.append(" ");
             }
 
@@ -335,6 +347,7 @@ void parser::result()
     }
 }
 
+// ========================================================
 
 void parser::addInTree(QVector <Lexeme> elem, QString type, bool term, int layer)
 {
