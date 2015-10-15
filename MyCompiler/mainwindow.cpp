@@ -73,6 +73,7 @@ void MainWindow::resultsOfLexer(QString forTable)
     LexTableView->setText(forTable);
     ui->pushButton_2->setEnabled(true);
     ui->pushButton_3->setEnabled(true);
+    ui->lblStat->setText(tr("Лексический анализ завершён"));
 }
 
 void MainWindow::lexicalError(QString txt)
@@ -97,6 +98,7 @@ void MainWindow::parsResult(QString tree)
 {
     TreeView->setText(tree);
     ui->pushButton_4->setEnabled(true);
+    ui->lblStat->setText(tr("Синтаксический анализ завершён"));
 }
 
 void MainWindow::on_pushButton_4_clicked()

@@ -106,6 +106,13 @@
         </item>
        </layout>
       </item>
+      <item>
+       <widget class="QLabel" name="lblStat">
+        <property name="text">
+         <string>Введите текст...</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
    </layout>
@@ -128,7 +135,6 @@
     <bool>false</bool>
    </attribute>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
