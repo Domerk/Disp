@@ -22,6 +22,8 @@ void parser::startParser()
     {
         analize();
         result();
+        emit treeSignal(tree);
+        tree.clear();
     }
     else
     {
@@ -121,7 +123,7 @@ bool parser::thisIsF(QVector<Lexeme> F, int layer)
 
             if (result)
             {
-                addInTree(F, "F", true, layer);
+                addInTree(F, "F", true, layer, 3);
             }
             return result;
 
@@ -132,7 +134,7 @@ bool parser::thisIsF(QVector<Lexeme> F, int layer)
             {
                 QVector <Lexeme> vct;
                 vct.append(F[0]);
-                addInTree(vct, "F", false, layer);
+                addInTree(vct, "F", false, layer, 0);
                 vct.clear();
 
                 int i = 1;
@@ -146,7 +148,7 @@ bool parser::thisIsF(QVector<Lexeme> F, int layer)
                 u1 = thisIsE(forE, layer+1); // Отправляем её на проверку и сохраняем результат
 
                 vct.append(F[i]);
-                addInTree(vct, "F", false, layer);
+                addInTree(vct, "F", false, layer, 0);
                 vct.clear();
 
                 // далее необходимо определить, есть ли у нас else
@@ -174,8 +176,9 @@ bool parser::thisIsF(QVector<Lexeme> F, int layer)
                     u2 = thisIsT(forT, layer+1); // Формируем последнюю часть строки
 
                     vct.append(F[i-1]);
-                    addInTree(vct, "F", false, layer);
+                    addInTree(vct, "F", false, layer, 1);
                     vct.clear();
+                    fixNumInTree(layer, 1);
 
                     while (i<n)
                     {
@@ -188,6 +191,7 @@ bool parser::thisIsF(QVector<Lexeme> F, int layer)
                 }
                 else
                 {
+                    fixNumInTree(layer, 2);
                     u2 = thisIsF(forT, layer+1); // Иначе считаем, что if E then F
                     return (u1 && u2); // Возвращаем результат
                 }
@@ -223,7 +227,7 @@ bool parser::thisIsT(QVector<Lexeme> T, int layer)
 
             if (result)
             {
-                addInTree(T, "T", true, layer);
+                addInTree(T, "T", true, layer, 5);
             }
             return result;
         }
@@ -233,7 +237,7 @@ bool parser::thisIsT(QVector<Lexeme> T, int layer)
             {
                 QVector<Lexeme> vct;
                 vct.append(T[0]);
-                addInTree(vct, "T", false, layer);
+                addInTree(vct, "T", false, layer, 4);
                 vct.clear();
 
                 int i = 1;
@@ -247,7 +251,7 @@ bool parser::thisIsT(QVector<Lexeme> T, int layer)
                 u1 = thisIsE(forE, layer+1);
 
                 vct.append(T[i]);
-                addInTree(vct, "T", false, layer);
+                addInTree(vct, "T", false, layer, 4);
                 vct.clear();
 
                 i++;
@@ -269,7 +273,7 @@ bool parser::thisIsT(QVector<Lexeme> T, int layer)
                 if (f == 0)
                 {
                     vct.append(T[i-1]);
-                    addInTree(vct, "T", false, layer);
+                    addInTree(vct, "T", false, layer, 4);
                     vct.clear();
                 }
 
@@ -300,7 +304,14 @@ bool parser::thisIsE(QVector<Lexeme> E, int layer)
         bool result = ((E[0].type == "Identifier" || E[0].type == "Number") && E[1].type == "Comparison Sign" && (E[2].type == "Identifier" || E[2].type == "Number"));
         if (result)
         {
-            addInTree(E, "E", true, layer);
+            if (E[1].lexeme == "<")
+                addInTree(E, "E", true, layer, 6);
+
+            if (E[1].lexeme == ">")
+                addInTree(E, "E", true, layer, 7);
+
+            if (E[1].lexeme == "=")
+                addInTree(E, "E", true, layer, 8);
         }
         return result;
     }
@@ -314,7 +325,7 @@ void parser::result()
     QString res;
     if (!tree.isEmpty())
     {
-        res.append(tr("<table border = 1 cellpadding=5><tr><td><b>Уровень</b></td><td><b>Выражение</b></td><td><b>Правило</b></td></tr>"));
+        res.append(tr("<table border = 1 cellpadding=5><tr><td><b>Уровень</b></td><td><b>Выражение</b></td><td><b>Правило</b></td><td><b>Номер</b></td></tr>"));
         for (Element & elem : tree)
         {
             res.append("<tr><td>");
@@ -340,6 +351,8 @@ void parser::result()
 
             res.append("</td><td>");
             res.append(elem.type);
+            res.append("</td><td>");
+            res.append(QString::number(elem.num));
             res.append("</td></tr>");
 
         }
@@ -349,16 +362,30 @@ void parser::result()
 
 // ========================================================
 
-void parser::addInTree(QVector <Lexeme> elem, QString type, bool term, int layer)
+void parser::addInTree(QVector <Lexeme> elem, QString type, bool term, int layer, int n)
 {
     Element newElem;
     newElem.expression = elem;
     newElem.layer = layer;
     newElem.terminate = term;
     newElem.type = type;
+    newElem.num = n;
     tree.append(newElem);
 }
 
 
-
+void parser::fixNumInTree(int layer, int num)
+{
+    int n = tree.size() - 1;
+    int f = 0;
+    while (f < 2 && n >= 0)
+    {
+        if (tree[n].layer == layer && tree[n].num == 0)
+        {
+            tree[n].num = num;
+            f++;
+        }
+        n--;
+    }
+}
 

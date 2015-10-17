@@ -25,6 +25,7 @@ public:
         QString type;
         bool terminate;
         int layer;
+        int num;
     };
 
 protected:
@@ -33,7 +34,8 @@ protected:
 
     void analize();
     void result();
-    void addInTree(QVector <Lexeme>, QString, bool, int);
+    void addInTree(QVector <Lexeme>, QString, bool, int, int);
+    void fixNumInTree(int, int);
 
     bool thisIsS(QVector <Lexeme>);
     bool thisIsF(QVector <Lexeme>, int);
@@ -47,6 +49,7 @@ public slots:
 signals:
     void parsError(QString);
     void parsResult(QString);
+    void treeSignal (QVector<Element>);
 
 };
 
