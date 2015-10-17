@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     MyLexer = new lexer();
     MyParser = new parser();
+    MyGen = new gen();
     LexTableView = new QLabel();
     TreeView = new QLabel();
 
@@ -28,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pushButton_2->setEnabled(false);
     ui->pushButton_3->setEnabled(false);
     ui->pushButton_4->setEnabled(false);
+    ui->pushButton_5->setEnabled(false);
 
     connect(this, SIGNAL(toLexer(QString)), MyLexer, SLOT(textSlot(QString)));
     connect (MyLexer, SIGNAL(tableSignal(QString)), this, SLOT(resultsOfLexer(QString)));
@@ -36,6 +38,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect (this, SIGNAL(startParser()), MyParser, SLOT(startParser()));
     connect (MyParser, SIGNAL(parsError(QString)), this, SLOT(parsError(QString)));
     connect (MyParser, SIGNAL(parsResult(QString)), this, SLOT(parsResult(QString)));
+    connect (MyParser, SIGNAL(treeSignal(QVector<Element>)), MyGen, SLOT(treeSlot(QVector<Element>)));
+    connect (MyGen, SIGNAL(genError(QString)), this, SLOT(genError(QString)));
+    connect (MyGen, SIGNAL(genResult(QString)), this, SLOT(genResult(QString)));
+    connect (this, SIGNAL(startGen()), MyGen, SLOT(startGen()));
 
 }
 
@@ -43,6 +49,7 @@ MainWindow::~MainWindow()
 {
     delete MyLexer;
     delete MyParser;
+    delete MyGen;
     delete LexTableView;
     delete messbox;
     delete TreeView;
@@ -98,6 +105,7 @@ void MainWindow::parsResult(QString tree)
 {
     TreeView->setText(tree);
     ui->pushButton_4->setEnabled(true);
+    ui->pushButton_5->setEnabled(true);
     ui->lblStat->setText(tr("Синтаксический анализ завершён"));
 }
 
@@ -105,3 +113,23 @@ void MainWindow::on_pushButton_4_clicked()
 {
     TreeView->show();
 }
+
+void MainWindow::on_pushButton_5_clicked()
+{
+    emit startGen();
+}
+
+void MainWindow::genError(QString errorTxt)
+{
+    errorTxt.prepend(tr("В ходе генерации объектного кода были обнаружены ошибки.<br>"));
+    messbox->setText(errorTxt);
+    messbox->setWindowTitle(tr("Сообщение об ошибке"));
+    messbox->show();
+}
+
+void MainWindow::genResult(QString result)
+{
+    ui->textEdit_2->setText(result);
+}
+
+
