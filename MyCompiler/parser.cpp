@@ -47,6 +47,9 @@ void parser::analize()
             // Проверям, является ли строка синтаксически правильной
             if (thisIsS(Str) == true)
             {
+                QVector<Lexeme> vct;
+                vct.append(newLex);
+                addInTree(vct, "S", true, 0, 0);
                 Str.clear(); // Если всё хорошо, чистим её
             }
             else
@@ -328,32 +331,35 @@ void parser::result()
         res.append(tr("<table border = 1 cellpadding=5><tr><td><b>Уровень</b></td><td><b>Выражение</b></td><td><b>Правило</b></td><td><b>Номер</b></td></tr>"));
         for (Element & elem : tree)
         {
-            res.append("<tr><td>");
-            res.append(QString::number(elem.layer));
-            res.append("</td><td>");
-
-            for (Lexeme & lex : elem.expression)
+            if (elem.num != 0)
             {
-                if (lex.lexeme == "<") // Заменяем < на тег
+                res.append("<tr><td>");
+                res.append(QString::number(elem.layer));
+                res.append("</td><td>");
+
+                for (Lexeme & lex : elem.expression)
                 {
-                    res.append("&lt;");
-                }
-                else
-                {
-                    if(lex.lexeme == ">") // Заменяем > на тег
-                        res.append("&gt;");
+                    if (lex.lexeme == "<") // Заменяем < на тег
+                    {
+                        res.append("&lt;");
+                    }
                     else
-                        res.append(lex.lexeme); // Добавляем лексему
+                    {
+                        if(lex.lexeme == ">") // Заменяем > на тег
+                            res.append("&gt;");
+                        else
+                            res.append(lex.lexeme); // Добавляем лексему
+                    }
+
+                    res.append(" ");
                 }
 
-                res.append(" ");
+                res.append("</td><td>");
+                res.append(elem.type);
+                res.append("</td><td>");
+                res.append(QString::number(elem.num));
+                res.append("</td></tr>");
             }
-
-            res.append("</td><td>");
-            res.append(elem.type);
-            res.append("</td><td>");
-            res.append(QString::number(elem.num));
-            res.append("</td></tr>");
 
         }
         emit parsResult(res);
