@@ -40,9 +40,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect (MyParser, SIGNAL(parsResult(QString)), this, SLOT(parsResult(QString)));
     connect (MyParser, SIGNAL(treeSignal(QVector<Element>)), MyGen, SLOT(treeSlot(QVector<Element>)));
     connect (MyGen, SIGNAL(genError(QString)), this, SLOT(genError(QString)));
-    connect (MyGen, SIGNAL(genResult(QString)), this, SLOT(genResult(QString)));
+    connect (MyGen, SIGNAL(genResult(QString, QString)), this, SLOT(genResult(QString, QString)));
     connect (this, SIGNAL(startGen()), MyGen, SLOT(startGen()));
-
 }
 
 MainWindow::~MainWindow()
@@ -127,9 +126,11 @@ void MainWindow::genError(QString errorTxt)
     messbox->show();
 }
 
-void MainWindow::genResult(QString result)
+void MainWindow::genResult(QString result, QString result2)
 {
     ui->textEdit_2->setText(result);
+    ui->textEdit_3->setText(result2);
+    ui->lblStat->setText(tr("Генерация объектного кода завершена"));
 }
 
 

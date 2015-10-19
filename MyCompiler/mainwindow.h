@@ -47,7 +47,7 @@ public slots:
     void parsError(QString);
     void parsResult(QString);
     void genError(QString);
-    void genResult(QString);
+    void genResult(QString, QString);
 
 signals:
     void toLexer(QString);

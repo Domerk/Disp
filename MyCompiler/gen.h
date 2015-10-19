@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QVector>
 #include <QString>
+#include <QMap>
 
 class gen : public QObject
 {
@@ -29,13 +30,19 @@ public:
 
 protected:
     QVector<Element> tree;
-    QString* code;
+    QVector<QString> objCode;
+    QVector<QString> optCode;
+    QMap<QString, QString> replaceTable;
+    QString* code1;
+    QString* code2;
 
-    void genCode();
+    void genCode(QVector<Element> phrase);
+    void review();
+    void result();
 
 signals:
     void genError(QString);
-    void genResult(QString);
+    void genResult(QString, QString);
 
 public slots:
     void startGen();
