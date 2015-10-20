@@ -78,6 +78,8 @@ void gen::genCode(QVector<Element>phrase)
                 optCode.append(", ");
                 optCode.append(phrase[i].expression[2].lexeme);
 
+                // !!!
+                // Разобраться, почему при уровне вложенности >0 всё равно происходит попадание а таблицу
                 if (phrase[i].expression[2].type == "Number" && phrase[i].layer == 0)
                     replaceTable.insert(phrase[i].expression[0].lexeme, phrase[i].expression[2].lexeme);
 
@@ -157,7 +159,8 @@ void gen::genCode(QVector<Element>phrase)
                 QVector<Element>ph;
                 int layer = phrase[i].layer;
                 i++;
-                while (phrase[i].expression[0].lexeme != "else" && phrase[i].layer != layer)
+
+                while (phrase[i].layer > layer)
                 {
                     ph.append(phrase[i]);
                     i++;
@@ -172,7 +175,7 @@ void gen::genCode(QVector<Element>phrase)
                 QVector<Element>ph;
                 int layer = phrase[i].layer;
                 i++;
-                while (i < n && phrase[i].layer != layer)
+                while (i < n && phrase[i].layer > layer)
                 {
                     ph.append(phrase[i]);
                     i++;
@@ -196,7 +199,7 @@ void gen::genCode(QVector<Element>phrase)
                 QVector<Element>ph;
                 int layer = phrase[i].layer;
                 i++;
-                while (phrase[i].expression[0].lexeme != "then" && phrase[i].layer != layer)
+                while (phrase[i].layer > layer)
                 {
                     ph.append(phrase[i]);
                     i++;
@@ -211,7 +214,7 @@ void gen::genCode(QVector<Element>phrase)
                 QVector<Element>ph;
                 int layer = phrase[i].layer;
                 i++;
-                while (i < n && phrase[i].layer != layer)
+                while (i < n && phrase[i].layer > layer)
                 {
                     ph.append(phrase[i]);
                     i++;
