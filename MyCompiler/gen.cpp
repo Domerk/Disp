@@ -4,6 +4,7 @@ gen::gen(QObject *parent) : QObject(parent)
 {
     code1 = new QString();
     code2 = new QString();
+    numLayout = 0;
 }
 
 gen::~gen()
@@ -52,7 +53,7 @@ void gen::genCode(QVector<Element>phrase)
 {
     int n = phrase.size();
     int i = 0;
-    while (i < n)
+    if (n>0)
     {
         //==========================================
         if (phrase[i].num == 3 || phrase[i].num == 5)
@@ -77,14 +78,14 @@ void gen::genCode(QVector<Element>phrase)
                 optCode.append(", ");
                 optCode.append(phrase[i].expression[2].lexeme);
 
-                if (phrase[i].expression[2].type == "Number")
+                if (phrase[i].expression[2].type == "Number" && phrase[i].layer == 0)
                     replaceTable.insert(phrase[i].expression[0].lexeme, phrase[i].expression[2].lexeme);
-                else
+
+                if (phrase[i].expression[2].type != "Number")
                     replaceTable.erase(replaceTable.find(phrase[i].expression[0].lexeme));
             }
             optCode.append("\n");
-            i++;
-            continue;
+            return;
         }
 
         //==========================================
@@ -97,18 +98,18 @@ void gen::genCode(QVector<Element>phrase)
             objCode.append(phrase[i].expression[2].lexeme);
 
             optCode.append("cmp ");
-            if (!replaceTable[phrase[i].expression[2].lexeme].isNull())
-            {
-                optCode.append(phrase[i].expression[0].lexeme);
-                optCode.append(", ");
-                optCode.append(replaceTable.value(phrase[i].expression[2].lexeme));
-            }
+
+            if (!replaceTable[phrase[i].expression[0].lexeme].isNull())
+                optCode.append(replaceTable.value(phrase[i].expression[0].lexeme));
             else
-            {
                 optCode.append(phrase[i].expression[0].lexeme);
-                optCode.append(", ");
+
+            optCode.append(", ");
+
+            if (!replaceTable[phrase[i].expression[2].lexeme].isNull())
+                optCode.append(replaceTable.value(phrase[i].expression[2].lexeme));
+            else
                 optCode.append(phrase[i].expression[2].lexeme);
-            }
 
             if (phrase[i].num == 6)
             {
@@ -127,14 +128,15 @@ void gen::genCode(QVector<Element>phrase)
                 objCode.append("\njnz ");
                 optCode.append("\njnz ");
             }
-            i++;
-            continue;
+            return;
         }
 
         //==========================================
 
         if (phrase[i].num == 1 || phrase[i].num == 4)
         {
+            int nl = numLayout;
+            numLayout +=2;
             if (phrase[i].expression[0].lexeme == "if")
             {
                 QVector<Element>ph;
@@ -146,8 +148,8 @@ void gen::genCode(QVector<Element>phrase)
                     i++;
                 }
                 genCode(ph);
-                objCode.append("label1\n");
-                optCode.append("label1\n");
+                objCode.append("label" + QString::number(nl) + "\n");
+                optCode.append("label" + QString::number(nl) + "\n");
             }
 
             if (phrase[i].expression[0].lexeme == "then")
@@ -161,8 +163,8 @@ void gen::genCode(QVector<Element>phrase)
                     i++;
                 }
                 genCode(ph);
-                objCode.append("jmp label2\nlabel1:\n");
-                optCode.append("jmp label2\nlabel1:\n");
+                objCode.append("jmp label" + QString::number(nl+1) + "\n\nlabel" + QString::number(nl) + ":\n");
+                optCode.append("jmp label" + QString::number(nl+1) + "\n\nlabel" + QString::number(nl) + ":\n");
             }
 
             if (phrase[i].expression[0].lexeme == "else")
@@ -176,16 +178,19 @@ void gen::genCode(QVector<Element>phrase)
                     i++;
                 }
                 genCode(ph);
-                objCode.append("label2:\n");
-                optCode.append("label2:\n");
+                objCode.append("\nlabel" + QString::number(nl+1) + ":\n");
+                optCode.append("\nlabel" + QString::number(nl+1) + ":\n");
 
             }
+            return;
         }
 
         //==========================================
 
         if (phrase[i].num == 2)
         {
+            int nl = numLayout;
+            numLayout ++;
             if (phrase[i].expression[0].lexeme == "if")
             {
                 QVector<Element>ph;
@@ -197,8 +202,8 @@ void gen::genCode(QVector<Element>phrase)
                     i++;
                 }
                 genCode(ph);
-                objCode.append("label1\n");
-                optCode.append("label1\n");
+                objCode.append("label" + QString::number(nl) + "\n");
+                optCode.append("label" + QString::number(nl) + "\n");
             }
 
             if (phrase[i].expression[0].lexeme == "then")
@@ -212,9 +217,10 @@ void gen::genCode(QVector<Element>phrase)
                     i++;
                 }
                 genCode(ph);
-                objCode.append("label1:\n");
-                optCode.append("label1:\n");
+                objCode.append("\nlabel" + QString::number(nl) + ":\n");
+                optCode.append("\nlabel" + QString::number(nl) + ":\n");
             }
+            return;
         }
     }
 
@@ -236,4 +242,5 @@ void gen::result()
     objCode.clear();
     optCode.clear();
     replaceTable.clear();
+    numLayout = 0;
 }

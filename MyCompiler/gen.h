@@ -35,6 +35,7 @@ protected:
     QMap<QString, QString> replaceTable;
     QString* code1;
     QString* code2;
+    int numLayout;
 
     void genCode(QVector<Element> phrase);
     void review();
