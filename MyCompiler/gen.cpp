@@ -65,27 +65,37 @@ void gen::genCode(QVector<Element>phrase)
             objCode.append("\n");
 
             optCode.append("mov ");
-            if (!replaceTable[phrase[i].expression[2].lexeme].isNull())
+
+            // Пришедщая фраза a := b
+            // Если в таблице замен переменной b не сопоставлено занчение
+            if (replaceTable[phrase[i].expression[2].lexeme].isNull())
             {
-                optCode.append(phrase[i].expression[0].lexeme);
-                optCode.append(", ");
-                optCode.append(replaceTable.value(phrase[i].expression[2].lexeme));
-                replaceTable.insert(phrase[i].expression[0].lexeme, replaceTable.value(phrase[i].expression[2].lexeme));
-            }
-            else
-            {
+                // Заносим его в оптимизированный код как оно есть
                 optCode.append(phrase[i].expression[0].lexeme);
                 optCode.append(", ");
                 optCode.append(phrase[i].expression[2].lexeme);
 
-                // !!!
-                // Разобраться, почему при уровне вложенности >0 всё равно происходит попадание а таблицу
-                if (phrase[i].expression[2].type == "Number" && phrase[i].layer == 0)
+                // И если b - число, а уровень вложенности 0, то заносим в таблицу замен пару a | b
+                if (phrase[i].layer == 0 && phrase[i].expression[2].type == "Number")
                     replaceTable.insert(phrase[i].expression[0].lexeme, phrase[i].expression[2].lexeme);
 
-                if (phrase[i].expression[2].type != "Number")
+                // Если b - не число, и в таблице есть запись для a, то удаляем эту запись
+                if (phrase[i].expression[2].type != "Number" && !replaceTable[phrase[i].expression[0].lexeme].isNull())
                     replaceTable.erase(replaceTable.find(phrase[i].expression[0].lexeme));
             }
+            else
+            {
+                // Иначе, если в таблице уже есть запись для b
+                // То подставляем вместо b соответсвующее значение
+                optCode.append(phrase[i].expression[0].lexeme);
+                optCode.append(", ");
+                optCode.append(replaceTable.value(phrase[i].expression[2].lexeme));
+
+                // И если уровень вложенности 0, то заносим в таблицу замен пару a | b
+                if (phrase[i].layer == 0 && phrase[i].expression[2].type == "Number")
+                    replaceTable.insert(phrase[i].expression[0].lexeme, replaceTable.value(phrase[i].expression[2].lexeme));
+            }
+
             optCode.append("\n");
             return;
         }
