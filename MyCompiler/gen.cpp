@@ -58,21 +58,23 @@ void gen::genCode(QVector<Element>phrase)
         //==========================================
         if (phrase[i].num == 3 || phrase[i].num == 5)
         {
-            objCode.append("mov ");
-            objCode.append(phrase[i].expression[0].lexeme);
-            objCode.append(", ");
+            // Присваивание происходит в два этапа: сначала значение заносится из переменной в регистр Ах
+            // А затем из регистра - в другую переменную
+            objCode.append("\tmov Ax, ");
             objCode.append(phrase[i].expression[2].lexeme);
             objCode.append("\n");
 
-            optCode.append("mov ");
+            objCode.append("\tmov ");
+            objCode.append(phrase[i].expression[0].lexeme);
+            objCode.append(", Ax\n");
+
+            optCode.append("\tmov Ax, ");
 
             // Пришедщая фраза a := b
             // Если в таблице замен переменной b не сопоставлено занчение
             if (replaceTable[phrase[i].expression[2].lexeme].isNull())
             {
                 // Заносим его в оптимизированный код как оно есть
-                optCode.append(phrase[i].expression[0].lexeme);
-                optCode.append(", ");
                 optCode.append(phrase[i].expression[2].lexeme);
 
                 // И если b - число, а уровень вложенности 0, то заносим в таблицу замен пару a | b
@@ -87,8 +89,6 @@ void gen::genCode(QVector<Element>phrase)
             {
                 // Иначе, если в таблице уже есть запись для b
                 // То подставляем вместо b соответсвующее значение
-                optCode.append(phrase[i].expression[0].lexeme);
-                optCode.append(", ");
                 optCode.append(replaceTable.value(phrase[i].expression[2].lexeme));
 
                 // И если уровень вложенности 0, то заносим в таблицу замен пару a | b
@@ -96,7 +96,10 @@ void gen::genCode(QVector<Element>phrase)
                     replaceTable.insert(phrase[i].expression[0].lexeme, replaceTable.value(phrase[i].expression[2].lexeme));
             }
 
-            optCode.append("\n");
+            optCode.append("\n\tmov ");
+            optCode.append(phrase[i].expression[0].lexeme);
+            optCode.append(", Ax\n");
+
             return;
         }
 
@@ -104,12 +107,12 @@ void gen::genCode(QVector<Element>phrase)
 
         if (phrase[i].num == 6 || phrase[i].num == 7 || phrase[i].num == 8)
         {
-            objCode.append("cmp ");
+            objCode.append("\tcmp ");
             objCode.append(phrase[i].expression[0].lexeme);
             objCode.append(", ");
             objCode.append(phrase[i].expression[2].lexeme);
 
-            optCode.append("cmp ");
+            optCode.append("\tcmp ");
 
             if (!replaceTable[phrase[i].expression[0].lexeme].isNull())
                 optCode.append(replaceTable.value(phrase[i].expression[0].lexeme));
@@ -125,20 +128,20 @@ void gen::genCode(QVector<Element>phrase)
 
             if (phrase[i].num == 6)
             {
-                objCode.append("\njg ");
-                optCode.append("\njg ");
+                objCode.append("\n\tjge ");
+                optCode.append("\n\tjge ");
             }
 
             if (phrase[i].num == 7)
             {
-                objCode.append("\njl ");
-                optCode.append("\njl ");
+                objCode.append("\n\tjle ");
+                optCode.append("\n\tjle ");
             }
 
             if (phrase[i].num == 8)
             {
-                objCode.append("\njnz ");
-                optCode.append("\njnz ");
+                objCode.append("\n\tjnz ");
+                optCode.append("\n\tjnz ");
             }
             return;
         }
@@ -176,8 +179,8 @@ void gen::genCode(QVector<Element>phrase)
                     i++;
                 }
                 genCode(ph);
-                objCode.append("jmp label" + QString::number(nl+1) + "\n\nlabel" + QString::number(nl) + ":\n");
-                optCode.append("jmp label" + QString::number(nl+1) + "\n\nlabel" + QString::number(nl) + ":\n");
+                objCode.append("\tjmp label" + QString::number(nl+1) + "\nlabel" + QString::number(nl) + ":");
+                optCode.append("\tjmp label" + QString::number(nl+1) + "\nlabel" + QString::number(nl) + ":");
             }
 
             if (phrase[i].expression[0].lexeme == "else")
@@ -191,8 +194,8 @@ void gen::genCode(QVector<Element>phrase)
                     i++;
                 }
                 genCode(ph);
-                objCode.append("\nlabel" + QString::number(nl+1) + ":\n");
-                optCode.append("\nlabel" + QString::number(nl+1) + ":\n");
+                objCode.append("\nlabel" + QString::number(nl+1) + ":");
+                optCode.append("\nlabel" + QString::number(nl+1) + ":");
 
             }
             return;
@@ -230,8 +233,8 @@ void gen::genCode(QVector<Element>phrase)
                     i++;
                 }
                 genCode(ph);
-                objCode.append("\nlabel" + QString::number(nl) + ":\n");
-                optCode.append("\nlabel" + QString::number(nl) + ":\n");
+                objCode.append("\nlabel" + QString::number(nl) + ":");
+                optCode.append("\nlabel" + QString::number(nl) + ":");
             }
             return;
         }
